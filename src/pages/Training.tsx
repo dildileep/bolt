@@ -1,11 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
-import { BookOpen, Clock, CheckCircle, PlayCircle, Calendar, TrendingUp } from 'lucide-react';
+import { AddTrainingModal } from '../components/Training/AddTrainingModal';
+import { BookOpen, Clock, CheckCircle, PlayCircle, Calendar, TrendingUp, Plus, Edit, Trash2 } from 'lucide-react';
 
 export function Training() {
   const { user } = useAuth();
-  const { trainings, updateTrainingProgress } = useData();
+  const { trainings, updateTrainingProgress, deleteTraining } = useData();
+  const [showAddModal, setShowAddModal] = useState(false);
 
   const userTrainings = trainings.filter(t => t.assignedTo === user?.id);
   const inProgress = userTrainings.filter(t => t.status === 'in_progress');
@@ -45,6 +47,12 @@ export function Training() {
     }
   };
 
+  const handleDeleteTraining = (id: string) => {
+    if (window.confirm('Are you sure you want to delete this training?')) {
+      deleteTraining(id);
+    }
+  };
+
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-center">
@@ -55,11 +63,19 @@ export function Training() {
           </p>
         </div>
         
-        <div className="flex items-center space-x-4 text-sm text-gray-600">
-          <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 text-sm text-gray-600">
             <TrendingUp className="w-4 h-4" />
             <span>{completed.length}/{userTrainings.length} completed</span>
           </div>
+          
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="flex items-center space-x-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add Training</span>
+          </button>
         </div>
       </div>
 
@@ -110,13 +126,24 @@ export function Training() {
             {inProgress.map((training) => (
               <div key={training.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                 <div className="flex items-start justify-between mb-4">
-                  <div>
+                  <div className="flex-1">
                     <h3 className="text-lg font-semibold text-gray-900">{training.courseName}</h3>
                     <p className="text-sm text-gray-600 mt-1">{training.description}</p>
+                    {training.category && (
+                      <span className="inline-block px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full mt-2">
+                        {training.category}
+                      </span>
+                    )}
                   </div>
-                  <span className={`px-3 py-1 text-xs font-medium rounded-full ${getStatusColor(training.status)}`}>
-                    {getStatusText(training.status)}
-                  </span>
+                  <div className="flex space-x-2 ml-4">
+                    <button
+                      onClick={() => handleDeleteTraining(training.id)}
+                      className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                      title="Delete training"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
                 
                 <div className="mb-4">
@@ -132,12 +159,17 @@ export function Training() {
                   </div>
                 </div>
                 
-                {training.dueDate && (
-                  <div className="flex items-center space-x-2 text-sm text-gray-500 mb-4">
-                    <Calendar className="w-4 h-4" />
-                    <span>Due: {new Date(training.dueDate).toLocaleDateString()}</span>
-                  </div>
-                )}
+                <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
+                  {training.dueDate && (
+                    <div className="flex items-center space-x-1">
+                      <Calendar className="w-4 h-4" />
+                      <span>Due: {new Date(training.dueDate).toLocaleDateString()}</span>
+                    </div>
+                  )}
+                  {training.duration && (
+                    <span>{training.duration}</span>
+                  )}
+                </div>
                 
                 <div className="flex space-x-3">
                   <button className="flex-1 bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors">
@@ -166,21 +198,37 @@ export function Training() {
             {notStarted.map((training) => (
               <div key={training.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                 <div className="flex items-start justify-between mb-4">
-                  <div>
+                  <div className="flex-1">
                     <h3 className="text-lg font-semibold text-gray-900">{training.courseName}</h3>
                     <p className="text-sm text-gray-600 mt-1">{training.description}</p>
+                    {training.category && (
+                      <span className="inline-block px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded-full mt-2">
+                        {training.category}
+                      </span>
+                    )}
                   </div>
-                  <span className={`px-3 py-1 text-xs font-medium rounded-full ${getStatusColor(training.status)}`}>
-                    {getStatusText(training.status)}
-                  </span>
+                  <div className="flex space-x-2 ml-4">
+                    <button
+                      onClick={() => handleDeleteTraining(training.id)}
+                      className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                      title="Delete training"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
                 
-                {training.dueDate && (
-                  <div className="flex items-center space-x-2 text-sm text-gray-500 mb-4">
-                    <Calendar className="w-4 h-4" />
-                    <span>Due: {new Date(training.dueDate).toLocaleDateString()}</span>
-                  </div>
-                )}
+                <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
+                  {training.dueDate && (
+                    <div className="flex items-center space-x-1">
+                      <Calendar className="w-4 h-4" />
+                      <span>Due: {new Date(training.dueDate).toLocaleDateString()}</span>
+                    </div>
+                  )}
+                  {training.duration && (
+                    <span>{training.duration}</span>
+                  )}
+                </div>
                 
                 <button
                   onClick={() => updateTrainingProgress(training.id, 10)}
@@ -211,6 +259,11 @@ export function Training() {
                       <div>
                         <h3 className="text-lg font-medium text-gray-900">{training.courseName}</h3>
                         <p className="text-sm text-gray-600">{training.description}</p>
+                        {training.completedDate && (
+                          <p className="text-xs text-gray-500 mt-1">
+                            Completed on {new Date(training.completedDate).toLocaleDateString()}
+                          </p>
+                        )}
                       </div>
                     </div>
                     <div className="text-right">
@@ -233,9 +286,25 @@ export function Training() {
           <BookOpen className="w-12 h-12 text-gray-400 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">No training assigned</h3>
           <p className="text-gray-600 mb-6">
-            Once training courses are assigned to you, they will appear here.
+            Add your own training courses or wait for assignments from your manager.
           </p>
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="flex items-center space-x-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors mx-auto"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add Training Course</span>
+          </button>
         </div>
+      )}
+
+      {/* Add Training Modal */}
+      {showAddModal && (
+        <AddTrainingModal
+          onClose={() => setShowAddModal(false)}
+          assignedTo={user!.id}
+          assignedBy={user!.id}
+        />
       )}
     </div>
   );

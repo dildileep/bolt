@@ -2,13 +2,16 @@ import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
 import { SkillCard } from '../components/Skills/SkillCard';
-import { Plus, Search, Filter, Target } from 'lucide-react';
+import { AddSkillModal } from '../components/Skills/AddSkillModal';
+import { Plus, Search, Filter, Target, Upload } from 'lucide-react';
 
 export function Skills() {
   const { user } = useAuth();
-  const { skills, employeeSkills, updateEmployeeSkill } = useData();
+  const { skills, employeeSkills, updateEmployeeSkill, addSkill, bulkAddSkills } = useData();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showBulkUpload, setShowBulkUpload] = useState(false);
 
   const userSkills = employeeSkills.filter(es => es.employeeId === user?.id);
   
@@ -17,7 +20,7 @@ export function Skills() {
     level: us.level,
     lastUpdated: us.lastUpdated,
     assessedBy: us.assessedBy
-  }));
+  })).filter(skill => skill.name); // Filter out undefined skills
 
   // Skills not yet assessed by the user
   const unassessedSkills = skills.filter(skill => 
@@ -40,6 +43,58 @@ export function Skills() {
     updateEmployeeSkill(user!.id, skillId, level);
   };
 
+  const handleAddSkill = (skillData: { name: string; category: string; description: string }) => {
+    addSkill(skillData);
+    setShowAddModal(false);
+  };
+
+  const handleBulkUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const content = e.target?.result as string;
+        let skillsData: any[] = [];
+
+        if (file.name.endsWith('.json')) {
+          skillsData = JSON.parse(content);
+        } else if (file.name.endsWith('.csv')) {
+          const lines = content.split('\n');
+          const headers = lines[0].split(',').map(h => h.trim());
+          skillsData = lines.slice(1).filter(line => line.trim()).map(line => {
+            const values = line.split(',').map(v => v.trim());
+            const skill: any = {};
+            headers.forEach((header, index) => {
+              skill[header] = values[index] || '';
+            });
+            return skill;
+          });
+        }
+
+        const validSkills = skillsData.filter(skill => 
+          skill.name && skill.category && skill.description
+        ).map(skill => ({
+          name: skill.name,
+          category: skill.category,
+          description: skill.description
+        }));
+
+        if (validSkills.length > 0) {
+          bulkAddSkills(validSkills);
+          alert(`Successfully added ${validSkills.length} skills!`);
+        } else {
+          alert('No valid skills found in the file. Please check the format.');
+        }
+      } catch (error) {
+        alert('Error reading file. Please check the format.');
+      }
+    };
+    reader.readAsText(file);
+    event.target.value = '';
+  };
+
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-center">
@@ -50,9 +105,36 @@ export function Skills() {
           </p>
         </div>
         
-        <div className="flex items-center space-x-2 text-sm text-gray-600">
-          <Target className="w-4 h-4" />
-          <span>{userSkills.length} skills assessed</span>
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 text-sm text-gray-600">
+            <Target className="w-4 h-4" />
+            <span>{userSkills.length} skills assessed</span>
+          </div>
+          
+          <div className="flex space-x-2">
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="flex items-center space-x-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add Skill</span>
+            </button>
+            
+            {user?.role === 'admin' && (
+              <div className="relative">
+                <input
+                  type="file"
+                  accept=".json,.csv"
+                  onChange={handleBulkUpload}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                />
+                <button className="flex items-center space-x-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors">
+                  <Upload className="w-4 h-4" />
+                  <span>Bulk Upload</span>
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -140,6 +222,14 @@ export function Skills() {
             Try adjusting your search terms or filters to find skills to assess.
           </p>
         </div>
+      )}
+
+      {/* Add Skill Modal */}
+      {showAddModal && (
+        <AddSkillModal
+          onClose={() => setShowAddModal(false)}
+          onAdd={handleAddSkill}
+        />
       )}
     </div>
   );

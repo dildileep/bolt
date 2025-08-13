@@ -1,11 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
-import { Award, Calendar, AlertTriangle, CheckCircle, Clock, Plus } from 'lucide-react';
+import { AddCertificationModal } from '../components/Certifications/AddCertificationModal';
+import { ViewCertificationModal } from '../components/Certifications/ViewCertificationModal';
+import { Award, Calendar, AlertTriangle, CheckCircle, Clock, Plus, Eye, Edit, Trash2 } from 'lucide-react';
 
 export function Certifications() {
   const { user } = useAuth();
-  const { certifications } = useData();
+  const { certifications, deleteCertification } = useData();
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [viewingCert, setViewingCert] = useState<string | null>(null);
 
   const userCertifications = certifications.filter(c => c.employeeId === user?.id);
   const activeCerts = userCertifications.filter(c => c.status === 'active');
@@ -59,6 +63,12 @@ export function Certifications() {
     return diffDays;
   };
 
+  const handleDeleteCertification = (id: string) => {
+    if (window.confirm('Are you sure you want to delete this certification?')) {
+      deleteCertification(id);
+    }
+  };
+
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-center">
@@ -69,7 +79,10 @@ export function Certifications() {
           </p>
         </div>
         
-        <button className="flex items-center space-x-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
+        <button 
+          onClick={() => setShowAddModal(true)}
+          className="flex items-center space-x-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+        >
           <Plus className="w-4 h-4" />
           <span>Add Certification</span>
         </button>
@@ -173,6 +186,11 @@ export function Certifications() {
                           Expires: {new Date(cert.expiryDate).toLocaleDateString()}
                         </span>
                       </div>
+                      {cert.issuer && (
+                        <div className="text-sm text-gray-500 mt-1">
+                          Issued by: {cert.issuer}
+                        </div>
+                      )}
                       {cert.status === 'expiring_soon' && (
                         <div className="text-sm text-yellow-600 mt-2">
                           Expires in {getDaysUntilExpiry(cert.expiryDate)} days
@@ -190,14 +208,20 @@ export function Certifications() {
                     </div>
                     
                     <div className="flex space-x-2">
-                      <button className="px-3 py-1 text-sm text-blue-600 hover:text-blue-700 font-medium">
-                        View
+                      <button 
+                        onClick={() => setViewingCert(cert.id)}
+                        className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
+                        title="View details"
+                      >
+                        <Eye className="w-4 h-4" />
                       </button>
-                      {cert.status === 'expiring_soon' && (
-                        <button className="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors">
-                          Renew
-                        </button>
-                      )}
+                      <button 
+                        onClick={() => handleDeleteCertification(cert.id)}
+                        className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Delete certification"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -211,13 +235,32 @@ export function Certifications() {
             <p className="text-gray-600 mb-6">
               Add your professional certifications to track renewal dates and maintain compliance.
             </p>
-            <button className="flex items-center space-x-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors mx-auto">
+            <button 
+              onClick={() => setShowAddModal(true)}
+              className="flex items-center space-x-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors mx-auto"
+            >
               <Plus className="w-4 h-4" />
               <span>Add Your First Certification</span>
             </button>
           </div>
         )}
       </div>
+
+      {/* Add Certification Modal */}
+      {showAddModal && (
+        <AddCertificationModal
+          onClose={() => setShowAddModal(false)}
+          employeeId={user!.id}
+        />
+      )}
+
+      {/* View Certification Modal */}
+      {viewingCert && (
+        <ViewCertificationModal
+          certificationId={viewingCert}
+          onClose={() => setViewingCert(null)}
+        />
+      )}
     </div>
   );
 }

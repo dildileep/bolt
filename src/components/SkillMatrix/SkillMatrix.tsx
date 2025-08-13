@@ -42,6 +42,32 @@ export function SkillMatrix() {
     return levels[level] || 'N/A';
   };
 
+  const generateCSVContent = () => {
+    const headers = ['Employee', 'Department', 'Role', ...filteredSkills.map(skill => skill.name)];
+    const rows = filteredEmployees.map(employee => [
+      employee.name,
+      employee.department,
+      employee.role,
+      ...filteredSkills.map(skill => getEmployeeSkillLevel(employee.id, skill.id) || 0)
+    ]);
+    
+    return [headers, ...rows].map(row => row.join(',')).join('\n');
+  };
+
+  const downloadCSV = (content: string, filename: string) => {
+    const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    if (link.download !== undefined) {
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', filename);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -75,6 +101,17 @@ export function SkillMatrix() {
           <button className="flex items-center space-x-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors">
             <Download className="w-4 h-4" />
             <span>Export</span>
+          </button>
+          
+          <button
+            onClick={() => {
+              const csvContent = generateCSVContent();
+              downloadCSV(csvContent, 'skill-matrix.csv');
+            }}
+            className="flex items-center space-x-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+          >
+            <Download className="w-4 h-4" />
+            <span>Export CSV</span>
           </button>
         </div>
       </div>

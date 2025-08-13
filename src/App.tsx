@@ -11,6 +11,9 @@ import { Employees } from './pages/Employees';
 import { Training } from './pages/Training';
 import { Certifications } from './pages/Certifications';
 import { SkillMatrix } from './components/SkillMatrix/SkillMatrix';
+import { Analytics } from './pages/Analytics';
+import { Settings } from './pages/Settings';
+import { Notifications } from './pages/Notifications';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
@@ -46,12 +49,7 @@ function AppRoutes() {
         <Route path="/skills" element={<Skills />} />
         <Route path="/training" element={<Training />} />
         <Route path="/certifications" element={<Certifications />} />
-        <Route path="/notifications" element={
-          <div className="text-center py-12">
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">Notifications</h2>
-            <p className="text-gray-600">Detailed notifications page coming soon...</p>
-          </div>
-        } />
+        <Route path="/notifications" element={<Notifications />} />
         
         {/* Admin only routes */}
         <Route
@@ -74,10 +72,7 @@ function AppRoutes() {
           path="/analytics"
           element={
             <AdminRoute>
-              <div className="text-center py-12">
-                <h2 className="text-xl font-semibold text-gray-900 mb-2">Analytics Dashboard</h2>
-                <p className="text-gray-600">Advanced analytics coming soon...</p>
-              </div>
+              <Analytics />
             </AdminRoute>
           }
         />
@@ -85,10 +80,7 @@ function AppRoutes() {
           path="/settings"
           element={
             <AdminRoute>
-              <div className="text-center py-12">
-                <h2 className="text-xl font-semibold text-gray-900 mb-2">Settings</h2>
-                <p className="text-gray-600">Admin settings coming soon...</p>
-              </div>
+              <Settings />
             </AdminRoute>
           }
         />
