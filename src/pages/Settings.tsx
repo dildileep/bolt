@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useData } from '../contexts/DataContext';
-import { Settings as SettingsIcon, User, Bell, Shield, Database, Download, Upload, Trash2, Save } from 'lucide-react';
+import { Settings as SettingsIcon, User, Bell, Shield, Database, Download, Upload, Trash2, Save, Plus, Users } from 'lucide-react';
 
 export function Settings() {
   const { user } = useAuth();
-  const { exportData, bulkAddEmployees, bulkAddSkills } = useData();
+  const { exportData, bulkAddEmployees, bulkAddSkills, bulkCreateUsersWithData } = useData();
   const [activeTab, setActiveTab] = useState('profile');
   const [notifications, setNotifications] = useState({
     emailNotifications: true,
@@ -21,7 +21,7 @@ export function Settings() {
     { id: 'data', label: 'Data Management', icon: Database }
   ];
 
-  const handleBulkUpload = (type: 'employees' | 'skills') => (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleBulkUpload = (type: 'employees' | 'skills' | 'users-with-data') => (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -56,7 +56,11 @@ export function Settings() {
             department: emp.department,
             location: emp.location || 'Not specified',
             joinDate: emp.joinDate || new Date().toISOString().split('T')[0],
-            avatar: emp.avatar || `https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=2`
+            avatar: emp.avatar || `https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=2`,
+            projectAssignment: emp.projectAssignment,
+            status: emp.status || 'active',
+            manager: emp.manager,
+            phone: emp.phone
           }));
 
           if (validEmployees.length > 0) {
@@ -71,7 +75,8 @@ export function Settings() {
           ).map(skill => ({
             name: skill.name,
             category: skill.category,
-            description: skill.description
+            description: skill.description,
+            tags: skill.tags ? (Array.isArray(skill.tags) ? skill.tags : skill.tags.split(',').map((t: string) => t.trim())) : []
           }));
 
           if (validSkills.length > 0) {
@@ -80,9 +85,21 @@ export function Settings() {
           } else {
             alert('No valid skills found in the file.');
           }
+        } else if (type === 'users-with-data') {
+          const validUsers = data.filter(user => 
+            user.name && user.email && user.role && user.department
+          );
+
+          if (validUsers.length > 0) {
+            bulkCreateUsersWithData(validUsers);
+            alert(`Successfully created ${validUsers.length} users with their data!`);
+          } else {
+            alert('No valid user data found in the file.');
+          }
         }
       } catch (error) {
         alert('Error reading file. Please check the format.');
+        console.error('File parsing error:', error);
       }
     };
     reader.readAsText(file);
@@ -98,6 +115,104 @@ export function Settings() {
       });
       alert('All data has been cleared. Please refresh the page.');
     }
+  };
+
+  const downloadSampleFiles = () => {
+    // Sample employee data
+    const sampleEmployees = [
+      {
+        name: "John Smith",
+        email: "john.smith@company.com",
+        role: "Senior Developer",
+        department: "Engineering",
+        location: "New York",
+        projectAssignment: "Project Alpha",
+        status: "active",
+        manager: "admin-1",
+        phone: "+1-555-0123"
+      }
+    ];
+
+    // Sample skills data
+    const sampleSkills = [
+      {
+        name: "React Native",
+        category: "Mobile",
+        description: "Cross-platform mobile development",
+        tags: ["Mobile", "React", "JavaScript"]
+      }
+    ];
+
+    // Sample users with complete data
+    const sampleUsersWithData = [
+      {
+        name: "Jane Doe",
+        email: "jane.doe@company.com",
+        role: "Full Stack Developer",
+        department: "Engineering",
+        location: "San Francisco",
+        projectAssignment: "Project Beta",
+        status: "active",
+        manager: "admin-1",
+        phone: "+1-555-0124",
+        certifications: [
+          {
+            name: "AWS Certified Solutions Architect",
+            issuedDate: "2023-01-15",
+            expiryDate: "2026-01-15",
+            status: "active",
+            issuer: "Amazon Web Services",
+            credentialId: "AWS-SA-2023-001",
+            category: "Cloud",
+            tags: ["AWS", "Cloud", "Architecture"],
+            projectAssignment: "Project Beta",
+            priority: "high"
+          }
+        ],
+        trainings: [
+          {
+            courseName: "Advanced JavaScript Patterns",
+            description: "Deep dive into JavaScript design patterns",
+            status: "not_started",
+            progress: 0,
+            dueDate: "2024-06-30",
+            category: "Programming",
+            duration: "25 hours",
+            tags: ["JavaScript", "Patterns", "Advanced"],
+            projectAssignment: "Project Beta",
+            priority: "medium",
+            provider: "Tech Academy",
+            cost: 199
+          }
+        ],
+        skills: [
+          {
+            skillId: "1", // React skill ID
+            level: 4,
+            notes: "Strong React development skills with hooks and context"
+          }
+        ]
+      }
+    ];
+
+    // Download sample files
+    const downloadSample = (data: any, filename: string) => {
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    };
+
+    downloadSample(sampleEmployees, 'sample-employees.json');
+    downloadSample(sampleSkills, 'sample-skills.json');
+    downloadSample(sampleUsersWithData, 'sample-users-with-data.json');
+    
+    alert('Sample files downloaded! Check your downloads folder.');
   };
 
   return (
@@ -276,16 +391,24 @@ export function Settings() {
               {/* Export Data */}
               <div className="bg-white border border-gray-200 rounded-lg p-6">
                 <h4 className="font-medium text-gray-900 mb-4">Export Data</h4>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {['employees', 'skills', 'certifications', 'trainings'].map((type) => (
-                    <button
-                      key={type}
-                      onClick={() => exportData(type as any)}
-                      className="flex items-center space-x-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
-                    >
-                      <Download className="w-4 h-4" />
-                      <span className="capitalize">{type}</span>
-                    </button>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                  {['employees', 'skills', 'certifications', 'trainings', 'all'].map((type) => (
+                    <div key={type} className="space-y-2">
+                      <button
+                        onClick={() => exportData(type as any, 'json')}
+                        className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm"
+                      >
+                        <Download className="w-4 h-4" />
+                        <span className="capitalize">{type} JSON</span>
+                      </button>
+                      <button
+                        onClick={() => exportData(type as any, 'csv')}
+                        className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm"
+                      >
+                        <Download className="w-4 h-4" />
+                        <span className="capitalize">{type} CSV</span>
+                      </button>
+                    </div>
                   ))}
                 </div>
               </div>
@@ -293,49 +416,82 @@ export function Settings() {
               {/* Import Data */}
               <div className="bg-white border border-gray-200 rounded-lg p-6">
                 <h4 className="font-medium text-gray-900 mb-4">Import Data</h4>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Bulk Upload Employees
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="file"
-                        accept=".json,.csv"
-                        onChange={handleBulkUpload('employees')}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                      />
-                      <button className="flex items-center space-x-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
-                        <Upload className="w-4 h-4" />
-                        <span>Upload Employees</span>
-                      </button>
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Bulk Upload Employees
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="file"
+                          accept=".json,.csv"
+                          onChange={handleBulkUpload('employees')}
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        />
+                        <button className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
+                          <Upload className="w-4 h-4" />
+                          <span>Upload Employees</span>
+                        </button>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Bulk Upload Skills
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="file"
+                          accept=".json,.csv"
+                          onChange={handleBulkUpload('skills')}
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        />
+                        <button className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors">
+                          <Upload className="w-4 h-4" />
+                          <span>Upload Skills</span>
+                        </button>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Create Users with Complete Data
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="file"
+                          accept=".json,.csv"
+                          onChange={handleBulkUpload('users-with-data')}
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        />
+                        <button className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition-colors">
+                          <Users className="w-4 h-4" />
+                          <span>Create Users + Data</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
                   
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Bulk Upload Skills
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="file"
-                        accept=".json,.csv"
-                        onChange={handleBulkUpload('skills')}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                      />
-                      <button className="flex items-center space-x-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
-                        <Upload className="w-4 h-4" />
-                        <span>Upload Skills</span>
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <div className="flex items-center justify-between mb-3">
+                      <h5 className="font-medium text-gray-900">Sample Files</h5>
+                      <button
+                        onClick={downloadSampleFiles}
+                        className="flex items-center space-x-2 px-3 py-1 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors text-sm"
+                      >
+                        <Download className="w-4 h-4" />
+                        <span>Download Samples</span>
                       </button>
                     </div>
+                    <p className="text-sm text-gray-600">
+                      <strong>Supported formats:</strong> JSON and CSV files. 
+                      Download sample files to see the required structure for bulk uploads.
+                    </p>
+                    <div className="mt-3 text-xs text-gray-500">
+                      <p><strong>Users with Complete Data:</strong> Creates employees with their certifications, trainings, and skill assessments in one upload.</p>
+                    </div>
                   </div>
-                </div>
-                
-                <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                  <p className="text-sm text-gray-600">
-                    <strong>Supported formats:</strong> JSON and CSV files. 
-                    Ensure your files contain the required fields for successful import.
-                  </p>
                 </div>
               </div>
               

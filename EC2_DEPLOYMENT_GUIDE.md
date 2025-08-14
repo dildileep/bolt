@@ -2,8 +2,8 @@
 
 ## 📋 Prerequisites
 - AWS Account with EC2 access
-- Basic knowledge of Linux commands
 - Domain name (optional, for custom domain)
+- Basic knowledge of Linux commands
 
 ## 🔧 Step 1: Launch EC2 Instance
 
@@ -11,7 +11,7 @@
 1. **Login to AWS Console** → Navigate to EC2 Dashboard
 2. **Launch Instance** with these specifications:
    - **AMI**: Ubuntu Server 22.04 LTS (Free Tier Eligible)
-   - **Instance Type**: t2.micro (Free Tier) or t3.small (Recommended)
+   - **Instance Type**: t3.small (Recommended) or t2.micro (Free Tier)
    - **Key Pair**: Create new or use existing SSH key pair
    - **Security Group**: Create with these rules:
      ```
@@ -62,71 +62,44 @@ sudo npm install -g pm2
 sudo apt install git -y
 ```
 
-## 📥 Step 3: Download and Deploy Application
+## 📥 Step 3: Deploy Application
 
-### 3.1 Method 1: Download from Current Session
+### 3.1 Create Application Directory
 ```bash
-# Create application directory
 mkdir -p /home/ubuntu/skill-matrix-portal
 cd /home/ubuntu/skill-matrix-portal
+```
 
-# If you have the code as a zip file, upload it:
-# Use SCP to transfer from your local machine:
+### 3.2 Upload Your Code
+**Option A: Using SCP (from your local machine)**
+```bash
+# Zip your project locally first
+zip -r skill-matrix-portal.zip /path/to/your/project
+
+# Upload to EC2
 scp -i "your-key.pem" skill-matrix-portal.zip ubuntu@your-ec2-ip:/home/ubuntu/
+
+# On EC2, extract
 cd /home/ubuntu
 unzip skill-matrix-portal.zip
 cd skill-matrix-portal
 ```
 
-### 3.2 Method 2: Clone from Repository (if available)
+**Option B: Manual File Creation**
+Create each file manually using `nano` and copy the content from your local files.
+
+### 3.3 Install Dependencies and Build
 ```bash
-# If you have pushed to GitHub/GitLab
-git clone https://github.com/yourusername/skill-matrix-portal.git
-cd skill-matrix-portal
-```
-
-### 3.3 Method 3: Manual File Transfer
-Create these files manually on the server:
-
-**Create package.json:**
-```bash
-nano package.json
-```
-Copy the package.json content from the project.
-
-**Create all source files:**
-```bash
-mkdir -p src/{components/{Auth,Dashboard,Layout,Skills,SkillMatrix},contexts,pages}
-```
-
-Then create each file using `nano` and copy the content.
-
-## 🔨 Step 4: Build and Configure Application
-
-### 4.1 Install Dependencies
-```bash
+# Install dependencies
 npm install
-```
 
-### 4.2 Build Production Version
-```bash
+# Build for production
 npm run build
 ```
 
-### 4.3 Configure Environment
-```bash
-# Create environment file
-nano .env
+## 🌐 Step 4: Configure Nginx
 
-# Add these variables:
-VITE_APP_NAME="Skill Matrix Portal"
-VITE_APP_VERSION="1.0.0"
-NODE_ENV=production
-```
-
-## 🌐 Step 5: Configure Nginx
-
-### 5.1 Create Nginx Configuration
+### 4.1 Create Nginx Configuration
 ```bash
 sudo nano /etc/nginx/sites-available/skill-matrix-portal
 ```
@@ -171,7 +144,7 @@ server {
 }
 ```
 
-### 5.2 Enable Site
+### 4.2 Enable Site
 ```bash
 # Enable the site
 sudo ln -s /etc/nginx/sites-available/skill-matrix-portal /etc/nginx/sites-enabled/
@@ -186,22 +159,27 @@ sudo nginx -t
 sudo systemctl restart nginx
 ```
 
-## 🔒 Step 6: SSL Certificate (Optional but Recommended)
+## 🔒 Step 5: SSL Certificate (HTTPS)
 
-### 6.1 Install Certbot
+### 5.1 Install Certbot
 ```bash
 sudo apt install certbot python3-certbot-nginx -y
 ```
 
-### 6.2 Get SSL Certificate
+### 5.2 Get SSL Certificate
 ```bash
 # Replace with your domain
 sudo certbot --nginx -d your-domain.com -d www.your-domain.com
+
+# For automatic renewal
+sudo crontab -e
+# Add this line:
+0 12 * * * /usr/bin/certbot renew --quiet
 ```
 
-## 🚀 Step 7: Start Application with PM2
+## 🚀 Step 6: Process Management with PM2
 
-### 7.1 Create PM2 Configuration
+### 6.1 Create PM2 Configuration
 ```bash
 nano ecosystem.config.js
 ```
@@ -224,7 +202,7 @@ module.exports = {
 };
 ```
 
-### 7.2 Install serve globally and start
+### 6.2 Install serve and start
 ```bash
 sudo npm install -g serve
 pm2 start ecosystem.config.js
@@ -232,7 +210,7 @@ pm2 save
 pm2 startup
 ```
 
-## 🔧 Step 8: Configure Firewall
+## 🔧 Step 7: Configure Firewall
 
 ```bash
 # Configure UFW firewall
@@ -241,9 +219,9 @@ sudo ufw allow 'Nginx Full'
 sudo ufw --force enable
 ```
 
-## 📊 Step 9: Monitoring and Logs
+## 📊 Step 8: Monitoring and Logs
 
-### 9.1 PM2 Monitoring
+### 8.1 PM2 Monitoring
 ```bash
 # View running processes
 pm2 list
@@ -255,7 +233,7 @@ pm2 logs skill-matrix-portal
 pm2 monit
 ```
 
-### 9.2 Nginx Logs
+### 8.2 Nginx Logs
 ```bash
 # Access logs
 sudo tail -f /var/log/nginx/access.log
@@ -264,7 +242,7 @@ sudo tail -f /var/log/nginx/access.log
 sudo tail -f /var/log/nginx/error.log
 ```
 
-## 🔄 Step 10: Deployment Script
+## 🔄 Step 9: Deployment Script
 
 Create an automated deployment script:
 
@@ -297,15 +275,15 @@ sudo systemctl reload nginx
 echo "✅ Deployment completed!"
 ```
 
-## 🌍 Step 11: Access Your Application
+## 🌍 Step 10: Access Your Application
 
 1. **Via IP**: `http://your-ec2-public-ip`
 2. **Via Domain**: `http://your-domain.com` (if configured)
 3. **HTTPS**: `https://your-domain.com` (if SSL configured)
 
-## 🔐 Step 12: Security Best Practices
+## 🔐 Step 11: Security Best Practices
 
-### 12.1 Update SSH Configuration
+### 11.1 Update SSH Configuration
 ```bash
 sudo nano /etc/ssh/sshd_config
 ```
@@ -322,14 +300,14 @@ Port 2222  # Change default SSH port
 sudo systemctl restart ssh
 ```
 
-### 12.2 Install Fail2Ban
+### 11.2 Install Fail2Ban
 ```bash
 sudo apt install fail2ban -y
 sudo systemctl start fail2ban
 sudo systemctl enable fail2ban
 ```
 
-### 12.3 Regular Updates
+### 11.3 Regular Updates
 ```bash
 # Create update script
 nano update.sh
@@ -379,17 +357,35 @@ pm2 update
    pm2 restart all
    ```
 
-## 📱 Step 13: Mobile Optimization
+## 📱 Step 12: Database Setup (Optional - For Future Backend)
 
-The application is already responsive, but ensure mobile performance:
+If you plan to add a backend database later:
 
-1. **Test on mobile devices**
-2. **Check loading speeds**
-3. **Verify touch interactions**
+### 12.1 Install PostgreSQL
+```bash
+sudo apt install postgresql postgresql-contrib -y
+sudo systemctl start postgresql
+sudo systemctl enable postgresql
+```
 
-## 🔄 Step 14: Backup Strategy
+### 12.2 Create Database
+```bash
+sudo -u postgres psql
+CREATE DATABASE skillmatrix;
+CREATE USER skillmatrix_user WITH ENCRYPTED PASSWORD 'your_password';
+GRANT ALL PRIVILEGES ON DATABASE skillmatrix TO skillmatrix_user;
+\q
+```
 
-### 14.1 Create Backup Script
+### 12.3 Configure Database Connection
+```bash
+# Add to your .env file
+echo "DATABASE_URL=postgresql://skillmatrix_user:your_password@localhost:5432/skillmatrix" >> .env
+```
+
+## 🔄 Step 13: Backup Strategy
+
+### 13.1 Create Backup Script
 ```bash
 nano backup.sh
 chmod +x backup.sh
@@ -413,7 +409,7 @@ find $BACKUP_DIR -name "skill-matrix-portal_*.tar.gz" -mtime +7 -delete
 echo "Backup completed: skill-matrix-portal_$DATE.tar.gz"
 ```
 
-### 14.2 Schedule Backups
+### 13.2 Schedule Backups
 ```bash
 crontab -e
 ```
@@ -425,7 +421,7 @@ crontab -e
 
 ## ✅ Final Checklist
 
-- [ ] EC2 instance running
+- [ ] EC2 instance running and accessible
 - [ ] Node.js and npm installed
 - [ ] Application built and deployed
 - [ ] Nginx configured and running
@@ -445,6 +441,12 @@ Your Skill Matrix Portal is now live on EC2!
 - Employee: `john@company.com`, `sarah@company.com`, `mike@company.com`
 - Password: Any non-empty value
 
+## 💰 **Estimated Costs:**
+- **t2.micro (Free Tier)**: $0/month for first year
+- **t3.small (Recommended)**: ~$15/month
+- **Domain**: ~$12/year (optional)
+- **SSL**: Free with Let's Encrypt
+
 ## 📞 Support
 
 If you encounter issues:
@@ -453,5 +455,4 @@ If you encounter issues:
 3. Ensure all services are running
 4. Verify security group settings
 
-**Estimated Total Setup Time: 30-45 minutes**
-**Monthly Cost: $5-15 (depending on instance type)**
+**Total Setup Time: 30-45 minutes**
