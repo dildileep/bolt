@@ -1,0 +1,537 @@
+{
+  "info": {
+    "name": "Skill Matrix API",
+    "description": "Complete API collection for Skill Matrix Portal",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{jwt_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3001",
+      "type": "string"
+    },
+    {
+      "key": "jwt_token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('jwt_token', response.data.token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@company.com\",\n  \"password\": \"admin123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test User\",\n  \"email\": \"test@company.com\",\n  \"password\": \"password123\",\n  \"department\": \"Engineering\",\n  \"location\": \"Remote\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Get Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/auth/me",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "me"]
+            }
+          }
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"admin123\",\n  \"newPassword\": \"newpassword123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/change-password",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "change-password"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/users?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/users/:userId",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", ":userId"],
+              "variable": [
+                {
+                  "key": "userId",
+                  "value": "user-id-here"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"New User\",\n  \"email\": \"newuser@company.com\",\n  \"password\": \"password123\",\n  \"role\": \"USER\",\n  \"department\": \"Engineering\",\n  \"location\": \"New York\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/users",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users"]
+            }
+          }
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Name\",\n  \"department\": \"Updated Department\",\n  \"location\": \"Updated Location\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/users/:userId",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", ":userId"],
+              "variable": [
+                {
+                  "key": "userId",
+                  "value": "user-id-here"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/users/:userId",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", ":userId"],
+              "variable": [
+                {
+                  "key": "userId",
+                  "value": "user-id-here"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Bulk Create Users",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\n    \"name\": \"Bulk User 1\",\n    \"email\": \"bulk1@company.com\",\n    \"password\": \"password123\",\n    \"department\": \"Engineering\",\n    \"location\": \"Remote\"\n  },\n  {\n    \"name\": \"Bulk User 2\",\n    \"email\": \"bulk2@company.com\",\n    \"password\": \"password123\",\n    \"department\": \"Marketing\",\n    \"location\": \"New York\"\n  }\n]"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/users/bulk",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", "bulk"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Skills",
+      "item": [
+        {
+          "name": "Get All Skills",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/skills?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "skills"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Skill by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/skills/:skillId",
+              "host": ["{{base_url}}"],
+              "path": ["api", "skills", ":skillId"],
+              "variable": [
+                {
+                  "key": "skillId",
+                  "value": "skill-id-here"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Skill",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"New Skill\",\n  \"category\": \"PROGRAMMING\",\n  \"description\": \"Description of the new skill\",\n  \"tags\": [\"tag1\", \"tag2\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/skills",
+              "host": ["{{base_url}}"],
+              "path": ["api", "skills"]
+            }
+          }
+        },
+        {
+          "name": "Update Skill",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Skill Name\",\n  \"description\": \"Updated description\",\n  \"tags\": [\"updated-tag\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/skills/:skillId",
+              "host": ["{{base_url}}"],
+              "path": ["api", "skills", ":skillId"],
+              "variable": [
+                {
+                  "key": "skillId",
+                  "value": "skill-id-here"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Skill",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/skills/:skillId",
+              "host": ["{{base_url}}"],
+              "path": ["api", "skills", ":skillId"],
+              "variable": [
+                {
+                  "key": "skillId",
+                  "value": "skill-id-here"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Bulk Create Skills",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\n    \"name\": \"Bulk Skill 1\",\n    \"category\": \"FRONTEND\",\n    \"description\": \"First bulk skill\",\n    \"tags\": [\"frontend\", \"ui\"]\n  },\n  {\n    \"name\": \"Bulk Skill 2\",\n    \"category\": \"BACKEND\",\n    \"description\": \"Second bulk skill\",\n    \"tags\": [\"backend\", \"api\"]\n  }\n]"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/skills/bulk",
+              "host": ["{{base_url}}"],
+              "path": ["api", "skills", "bulk"]
+            }
+          }
+        },
+        {
+          "name": "Get User Skills",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/skills/user/:userId",
+              "host": ["{{base_url}}"],
+              "path": ["api", "skills", "user", ":userId"],
+              "variable": [
+                {
+                  "key": "userId",
+                  "value": "user-id-here"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update User Skill",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"proficiencyLevel\": 4,\n  \"notes\": \"Updated skill assessment notes\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/skills/user/:userId/:skillId",
+              "host": ["{{base_url}}"],
+              "path": ["api", "skills", "user", ":userId", ":skillId"],
+              "variable": [
+                {
+                  "key": "userId",
+                  "value": "user-id-here"
+                },
+                {
+                  "key": "skillId",
+                  "value": "skill-id-here"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete User Skill",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/skills/user/:userId/:skillId",
+              "host": ["{{base_url}}"],
+              "path": ["api", "skills", "user", ":userId", ":skillId"],
+              "variable": [
+                {
+                  "key": "userId",
+                  "value": "user-id-here"
+                },
+                {
+                  "key": "skillId",
+                  "value": "skill-id-here"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "Dashboard Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/admin/dashboard",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "dashboard"]
+            }
+          }
+        },
+        {
+          "name": "Skill Matrix",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/admin/skill-matrix",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "skill-matrix"]
+            }
+          }
+        },
+        {
+          "name": "Export Users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/admin/export/users",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "export", "users"]
+            }
+          }
+        },
+        {
+          "name": "Export Skills",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/admin/export/skills",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "export", "skills"]
+            }
+          }
+        },
+        {
+          "name": "Export All Data",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/admin/export/all",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "export", "all"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/health",
+          "host": ["{{base_url}}"],
+          "path": ["health"]
+        }
+      }
+    }
+  ]
+}

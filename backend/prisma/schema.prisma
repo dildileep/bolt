@@ -1,0 +1,192 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+enum SkillCategory {
+  FRONTEND
+  BACKEND
+  DATABASE
+  DEVOPS
+  CLOUD
+  PROGRAMMING
+  AI_ML
+  MOBILE
+  TESTING
+  SECURITY
+  DESIGN
+  MANAGEMENT
+  OTHER
+}
+
+enum CertificationStatus {
+  ACTIVE
+  EXPIRED
+  EXPIRING_SOON
+}
+
+enum TrainingStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+model User {
+  id                String   @id @default(cuid())
+  email             String   @unique
+  name              String
+  passwordHash      String
+  role              Role     @default(USER)
+  department        String?
+  location          String?
+  avatar            String?
+  joinDate          DateTime @default(now())
+  projectAssignment String?
+  status            String   @default("active")
+  manager           String?
+  phone             String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  userSkills     UserSkill[]
+  certifications Certification[]
+  trainings      Training[]
+  reports        Report[]
+
+  @@map("users")
+}
+
+model Skill {
+  id          String        @id @default(cuid())
+  name        String        @unique
+  category    SkillCategory
+  description String
+  tags        String[]      @default([])
+  createdBy   String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  // Relations
+  userSkills UserSkill[]
+
+  @@map("skills")
+}
+
+model UserSkill {
+  id              String   @id @default(cuid())
+  userId          String
+  skillId         String
+  proficiencyLevel Int     @default(1) // 1-5 scale
+  notes           String?
+  assessedBy      String?
+  lastUpdated     DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skill Skill @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, skillId])
+  @@map("user_skills")
+}
+
+model Certification {
+  id                String              @id @default(cuid())
+  name              String
+  employeeId        String
+  issuedDate        DateTime
+  expiryDate        DateTime
+  status            CertificationStatus @default(ACTIVE)
+  issuer            String?
+  credentialId      String?
+  verificationUrl   String?
+  category          String?
+  tags              String[]            @default([])
+  projectAssignment String?
+  priority          Priority            @default(MEDIUM)
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  // Relations
+  employee User @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@map("certifications")
+}
+
+model Training {
+  id                String        @id @default(cuid())
+  courseName        String
+  description       String
+  assignedTo        String
+  assignedBy        String
+  status            TrainingStatus @default(NOT_STARTED)
+  progress          Int           @default(0) // 0-100
+  dueDate           DateTime?
+  startDate         DateTime?
+  completedDate     DateTime?
+  category          String?
+  duration          String?
+  tags              String[]      @default([])
+  projectAssignment String?
+  priority          Priority      @default(MEDIUM)
+  provider          String?
+  cost              Float?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  // Relations
+  assignee User @relation(fields: [assignedTo], references: [id], onDelete: Cascade)
+
+  @@map("trainings")
+}
+
+model Report {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  type        String   // 'skill_gap', 'employee_strengths', 'department_analysis', etc.
+  data        Json
+  generatedBy String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  generator User @relation(fields: [generatedBy], references: [id], onDelete: Cascade)
+
+  @@map("reports")
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String   // 'CREATE', 'UPDATE', 'DELETE'
+  resource  String   // 'USER', 'SKILL', 'CERTIFICATION', etc.
+  resourceId String?
+  oldData   Json?
+  newData   Json?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@map("audit_logs")
+}
